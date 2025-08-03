@@ -13,6 +13,7 @@ import {
   Building,
   X
 } from 'lucide-react'
+import { API_ENDPOINTS } from '../config/api'
 
 const Dealers = () => {
   const [dealers, setDealers] = useState([])
@@ -38,7 +39,7 @@ const Dealers = () => {
         search: searchTerm || undefined
       }
       
-      const response = await axios.get('/admin/dealers', { params })
+      const response = await axios.get(API_ENDPOINTS.DEALERS, { params })
       setDealers(response.data.dealers)
       setTotalPages(response.data.totalPages)
     } catch (error) {
@@ -50,7 +51,7 @@ const Dealers = () => {
 
   const handleApprove = async (dealerId) => {
     try {
-      await axios.put(`/admin/dealers/${dealerId}/approve`)
+      await axios.put(API_ENDPOINTS.APPROVE_DEALER(dealerId))
       toast.success('Dealer approved successfully')
       fetchDealers()
     } catch (error) {
@@ -65,7 +66,7 @@ const Dealers = () => {
     }
 
     try {
-      await axios.put(`/admin/dealers/${dealerId}/reject`, { reason })
+      await axios.put(API_ENDPOINTS.REJECT_DEALER(dealerId), { reason })
       toast.success('Dealer rejected successfully')
       fetchDealers()
     } catch (error) {
@@ -75,7 +76,7 @@ const Dealers = () => {
 
   const handleViewDetails = async (dealerId) => {
     try {
-      const response = await axios.get(`/admin/dealers/${dealerId}`)
+      const response = await axios.get(API_ENDPOINTS.DEALER_DETAILS(dealerId))
       setSelectedDealer(response.data)
       setShowModal(true)
     } catch (error) {

@@ -14,6 +14,7 @@ import {
   MessageSquare,
   X
 } from 'lucide-react'
+import { API_ENDPOINTS } from '../config/api'
 
 const Enquiries = () => {
   const [enquiries, setEnquiries] = useState([])
@@ -38,7 +39,7 @@ const Enquiries = () => {
         status: statusFilter === 'all' ? undefined : statusFilter
       }
       
-      const response = await axios.get('/enquiries/admin/all', { params })
+      const response = await axios.get(API_ENDPOINTS.ENQUIRIES_ADMIN_ALL, { params })
       setEnquiries(response.data.enquiries)
       setTotalPages(response.data.totalPages)
     } catch (error) {
@@ -50,7 +51,7 @@ const Enquiries = () => {
 
   const handleApprove = async (enquiryId) => {
     try {
-      await axios.put(`/enquiries/admin/${enquiryId}/approve`)
+      await axios.put(API_ENDPOINTS.APPROVE_ENQUIRY(enquiryId))
       toast.success('Enquiry approved successfully')
       fetchEnquiries()
     } catch (error) {
@@ -65,7 +66,7 @@ const Enquiries = () => {
     }
 
     try {
-      await axios.put(`/enquiries/admin/${enquiryId}/reject`, { adminNotes: reason })
+      await axios.put(API_ENDPOINTS.REJECT_ENQUIRY(enquiryId), { adminNotes: reason })
       toast.success('Enquiry rejected successfully')
       fetchEnquiries()
     } catch (error) {
@@ -75,7 +76,7 @@ const Enquiries = () => {
 
   const handleUnderProcess = async (enquiryId) => {
     try {
-      await axios.put(`/enquiries/admin/${enquiryId}/status`, { 
+      await axios.put(API_ENDPOINTS.UPDATE_ENQUIRY_STATUS(enquiryId), { 
         status: 'under_process',
         adminNotes: 'Enquiry is under process'
       })
@@ -88,7 +89,7 @@ const Enquiries = () => {
 
   const handleViewDetails = async (enquiryId) => {
     try {
-      const response = await axios.get(`/enquiries/admin/${enquiryId}`)
+      const response = await axios.get(API_ENDPOINTS.ENQUIRY_DETAILS(enquiryId))
       setSelectedEnquiry(response.data.enquiry)
       setShowModal(true)
     } catch (error) {

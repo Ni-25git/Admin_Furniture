@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api'
 
 const AuthContext = createContext()
 
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   // Configure axios defaults
-  axios.defaults.baseURL = '/api'
+  axios.defaults.baseURL = API_BASE_URL
   axios.defaults.headers.common['Content-Type'] = 'application/json'
 
   // Add token to requests if available
@@ -60,7 +61,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post('/admin/login', { username, password })
+      const response = await axios.post(API_ENDPOINTS.LOGIN, { username, password })
       const { token, admin } = response.data
       
       localStorage.setItem('adminToken', token)

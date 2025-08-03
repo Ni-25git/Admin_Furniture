@@ -11,6 +11,7 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react'
+import { API_ENDPOINTS } from '../config/api'
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null)
@@ -22,7 +23,7 @@ const Dashboard = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await axios.get('/admin/dashboard')
+      const response = await axios.get(API_ENDPOINTS.DASHBOARD)
       setStats(response.data.dashboardStats)
     } catch (error) {
       toast.error('Failed to load dashboard data')

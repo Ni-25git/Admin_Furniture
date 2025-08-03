@@ -1,0 +1,35 @@
+// API Configuration
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+
+// API endpoints
+export const API_ENDPOINTS = {
+  // Auth
+  LOGIN: '/admin/login',
+  
+  // Dashboard
+  DASHBOARD: '/admin/dashboard',
+  
+  // Products
+  PRODUCTS: '/products',
+  PRODUCTS_ADMIN_ALL: '/products/admin/all',
+  PRODUCTS_CATEGORIES: '/products/categories/list',
+  UPLOAD_IMAGES: '/upload/images',
+  
+  // Dealers
+  DEALERS: '/admin/dealers',
+  DEALER_DETAILS: (id) => `/admin/dealers/${id}`,
+  APPROVE_DEALER: (id) => `/admin/dealers/${id}/approve`,
+  REJECT_DEALER: (id) => `/admin/dealers/${id}/reject`,
+  
+  // Enquiries
+  ENQUIRIES_ADMIN_ALL: '/enquiries/admin/all',
+  ENQUIRY_DETAILS: (id) => `/enquiries/admin/${id}`,
+  APPROVE_ENQUIRY: (id) => `/enquiries/admin/${id}/approve`,
+  REJECT_ENQUIRY: (id) => `/enquiries/admin/${id}/reject`,
+  UPDATE_ENQUIRY_STATUS: (id) => `/enquiries/admin/${id}/status`,
+}
+
+// Helper function to build full API URL
+export const buildApiUrl = (endpoint) => {
+  return `${API_BASE_URL}${endpoint}`
+} 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { X, Upload, Trash2, Plus } from 'lucide-react'
+import { API_ENDPOINTS } from '../config/api'
 
 const ProductModal = ({ product, onClose, onSaved, categories }) => {
   const [formData, setFormData] = useState({
@@ -58,7 +59,7 @@ const ProductModal = ({ product, onClose, onSaved, categories }) => {
         formData.append('images', file)
       })
 
-      const response = await axios.post('/upload/images', formData, {
+      const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGES, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -131,10 +132,10 @@ const ProductModal = ({ product, onClose, onSaved, categories }) => {
 
     try {
       if (isEditing) {
-        await axios.put(`/products/${product._id}`, formData)
+        await axios.put(`${API_ENDPOINTS.PRODUCTS}/${product._id}`, formData)
         toast.success('Product updated successfully')
       } else {
-        await axios.post('/products', formData)
+        await axios.post(API_ENDPOINTS.PRODUCTS, formData)
         toast.success('Product created successfully')
       }
       onSaved()

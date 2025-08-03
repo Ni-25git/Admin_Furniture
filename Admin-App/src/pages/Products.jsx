@@ -14,6 +14,7 @@ import {
   Package
 } from 'lucide-react'
 import ProductModal from '../components/ProductModal'
+import { API_ENDPOINTS } from '../config/api'
 
 const Products = () => {
   const [products, setProducts] = useState([])
@@ -42,7 +43,7 @@ const Products = () => {
         category: categoryFilter === 'all' ? undefined : categoryFilter
       }
       
-      const response = await axios.get('/products/admin/all', { params })
+      const response = await axios.get(API_ENDPOINTS.PRODUCTS_ADMIN_ALL, { params })
       setProducts(response.data.products)
       setTotalPages(response.data.totalPages)
     } catch (error) {
@@ -54,7 +55,7 @@ const Products = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('/products/categories/list')
+      const response = await axios.get(API_ENDPOINTS.PRODUCTS_CATEGORIES)
       setCategories(response.data.categories)
     } catch (error) {
       console.error('Failed to load categories')
@@ -67,7 +68,7 @@ const Products = () => {
     }
 
     try {
-      await axios.delete(`/products/${productId}`)
+      await axios.delete(`${API_ENDPOINTS.PRODUCTS}/${productId}`)
       toast.success('Product deleted successfully')
       fetchProducts()
     } catch (error) {

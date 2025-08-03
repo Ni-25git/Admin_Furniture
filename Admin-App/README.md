@@ -37,7 +37,27 @@ npm run dev
 
 ## API Configuration
 
-The app is configured to proxy API calls to `http://localhost:5000`. Make sure your backend server is running on that port.
+The app uses the `VITE_API_BASE_URL` environment variable to configure the API endpoint. 
+
+### Environment Setup
+
+1. Create a `.env` file in the root directory:
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+2. Or set as system environment variable:
+```bash
+export VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+For detailed setup instructions, see [ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md).
+
+### Default Configuration
+
+If no environment variable is set, the app defaults to `http://localhost:5000/api` and uses Vite's proxy configuration for development.
+
+Make sure your backend server is running on the configured port.
 
 ## Build
 
@@ -98,9 +118,12 @@ The app uses JWT tokens for authentication. Admin credentials are managed throug
 
 ## API Endpoints
 
-The app connects to these backend endpoints:
+All API endpoints are centralized in `src/config/api.js` and use the `VITE_API_BASE_URL` environment variable. The app connects to these backend endpoints:
+
 - `/api/admin/login` - Admin authentication
 - `/api/admin/dashboard` - Dashboard statistics
 - `/api/products/admin/all` - Product management
 - `/api/admin/dealers` - Dealer management
-- `/api/enquiries/admin/all` - Enquiry management 
+- `/api/enquiries/admin/all` - Enquiry management
+
+For a complete list of endpoints, see `src/config/api.js`. 

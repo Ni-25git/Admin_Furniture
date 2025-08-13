@@ -8,7 +8,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000',
+        target: process.env.VITE_API_BASE_URL?.replace('/api', '') || 'https://module-funturine.vercel.app',
         changeOrigin: true,
         secure: false,
       }

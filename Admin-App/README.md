@@ -43,19 +43,19 @@ The app uses the `VITE_API_BASE_URL` environment variable to configure the API e
 
 1. Create a `.env` file in the root directory:
 ```env
-VITE_API_BASE_URL=http://localhost:5000/api
+VITE_API_BASE_URL=https://module-funturine.vercel.app/api
 ```
 
 2. Or set as system environment variable:
 ```bash
-export VITE_API_BASE_URL=http://localhost:5000/api
+export VITE_API_BASE_URL=https://module-funturine.vercel.app/api
 ```
 
 For detailed setup instructions, see [ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md).
 
 ### Default Configuration
 
-If no environment variable is set, the app defaults to `http://localhost:5000/api` and uses Vite's proxy configuration for development.
+If no environment variable is set, the app defaults to `https://module-funturine.vercel.app/api` and uses Vite's proxy configuration for development.
 
 Make sure your backend server is running on the configured port.
 

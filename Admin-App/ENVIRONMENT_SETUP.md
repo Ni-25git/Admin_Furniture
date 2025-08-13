@@ -11,25 +11,25 @@ This application uses the `VITE_API_BASE_URL` environment variable to configure 
 Create a `.env` file in the root of the Admin-App directory with the following content:
 
 ```env
-VITE_API_BASE_URL=http://localhost:5000/api
+VITE_API_BASE_URL=https://module-funturine.vercel.app/api
 ```
 
 #### Option 2: Set as system environment variable
 
 On Windows:
 ```cmd
-set VITE_API_BASE_URL=http://localhost:5000/api
+set VITE_API_BASE_URL=https://module-funturine.vercel.app/api
 ```
 
 On macOS/Linux:
 ```bash
-export VITE_API_BASE_URL=http://localhost:5000/api
+export VITE_API_BASE_URL=https://module-funturine.vercel.app/api
 ```
 
 ### Default Configuration
 
 If no environment variable is set, the application will default to:
-- API Base URL: `http://localhost:5000/api`
+- API Base URL: `https://module-funturine.vercel.app/api`
 
 ### Development vs Production
 

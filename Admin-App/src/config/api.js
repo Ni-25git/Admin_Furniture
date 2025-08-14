@@ -1,6 +1,9 @@
 // API Configuration
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://module-funturine.vercel.app/api'
 
+// Check if we're in development or production
+export const IS_DEVELOPMENT = import.meta.env.DEV
+
 // API endpoints
 export const API_ENDPOINTS = {
   // Auth

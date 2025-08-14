@@ -11,6 +11,11 @@ export default defineConfig({
         target: process.env.VITE_API_BASE_URL?.replace('/api', '') || 'https://module-funturine.vercel.app',
         changeOrigin: true,
         secure: false,
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            proxyReq.setHeader('Origin', 'https://admindashboardfurniture.vercel.app');
+          });
+        }
       }
     }
   }

@@ -44,20 +44,56 @@ export const AuthProvider = ({ children }) => {
     }
   )
 
-  useEffect(() => {
-    const token = localStorage.getItem('adminToken')
-    const adminData = localStorage.getItem('adminData')
-    
-    if (token && adminData) {
-      try {
-        setAdmin(JSON.parse(adminData))
-        setIsAuthenticated(true)
-      } catch (error) {
-        localStorage.removeItem('adminToken')
-        localStorage.removeItem('adminData')
+  // Validate token with server
+  const validateToken = async (token) => {
+    try {
+      const response = await axios.get(API_ENDPOINTS.VALIDATE_TOKEN, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      return response.data.admin
+    } catch (error) {
+      // If validation endpoint doesn't exist (404) or token is invalid (401), return null
+      if (error.response?.status === 404) {
+        // Endpoint doesn't exist, fall back to localStorage data
+        const adminData = localStorage.getItem('adminData')
+        return adminData ? JSON.parse(adminData) : null
       }
+      return null
     }
-    setLoading(false)
+  }
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('adminToken')
+      const adminData = localStorage.getItem('adminData')
+      
+      if (token && adminData) {
+        try {
+          // Validate token with server
+          const validAdmin = await validateToken(token)
+          
+          if (validAdmin) {
+            setAdmin(validAdmin)
+            setIsAuthenticated(true)
+            // Update localStorage with fresh admin data
+            localStorage.setItem('adminData', JSON.stringify(validAdmin))
+          } else {
+            // Token is invalid, clear storage
+            localStorage.removeItem('adminToken')
+            localStorage.removeItem('adminData')
+          }
+        } catch (error) {
+          // If validation fails, clear storage
+          localStorage.removeItem('adminToken')
+          localStorage.removeItem('adminData')
+        }
+      }
+      setLoading(false)
+    }
+
+    initializeAuth()
   }, [])
 
   const login = async (username, password) => {

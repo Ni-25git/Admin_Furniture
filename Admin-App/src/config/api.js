@@ -9,6 +9,7 @@ export const API_BASE_URL = IS_DEVELOPMENT
 export const API_ENDPOINTS = {
   // Auth
   LOGIN: '/admin/login',
+  VALIDATE_TOKEN: '/admin/validate-token',
   
   // Dashboard
   DASHBOARD: '/admin/dashboard',

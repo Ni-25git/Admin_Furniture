@@ -11,9 +11,20 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import './App.css'
 
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, restoreAuth } = useAuth()
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState(false)
   
-  if (loading) {
+  React.useEffect(() => {
+    // Only try to restore auth if not already authenticated and not loading
+    if (!isAuthenticated && !loading && !isCheckingAuth) {
+      setIsCheckingAuth(true)
+      restoreAuth().finally(() => {
+        setIsCheckingAuth(false)
+      })
+    }
+  }, [isAuthenticated, loading, restoreAuth, isCheckingAuth])
+  
+  if (loading || isCheckingAuth) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">

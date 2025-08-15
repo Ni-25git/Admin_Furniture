@@ -65,36 +65,31 @@ export const AuthProvider = ({ children }) => {
   }
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      const token = localStorage.getItem('adminToken')
-      const adminData = localStorage.getItem('adminData')
-      
-      if (token && adminData) {
-        try {
-          // Validate token with server
-          const validAdmin = await validateToken(token)
-          
-          if (validAdmin) {
-            setAdmin(validAdmin)
-            setIsAuthenticated(true)
-            // Update localStorage with fresh admin data
-            localStorage.setItem('adminData', JSON.stringify(validAdmin))
-          } else {
-            // Token is invalid, clear storage
-            localStorage.removeItem('adminToken')
-            localStorage.removeItem('adminData')
-          }
-        } catch (error) {
-          // If validation fails, clear storage
-          localStorage.removeItem('adminToken')
-          localStorage.removeItem('adminData')
-        }
-      }
-      setLoading(false)
-    }
-
-    initializeAuth()
+    // Just set loading to false on initial load
+    // Don't automatically restore auth state
+    setLoading(false)
   }, [])
+
+  // Function to manually restore auth state (for when user is on protected route)
+  const restoreAuth = async () => {
+    const token = localStorage.getItem('adminToken')
+    const adminData = localStorage.getItem('adminData')
+    
+    if (token && adminData) {
+      try {
+        const validAdmin = await validateToken(token)
+        if (validAdmin) {
+          setAdmin(validAdmin)
+          setIsAuthenticated(true)
+          localStorage.setItem('adminData', JSON.stringify(validAdmin))
+          return true
+        }
+      } catch (error) {
+        // Handle error silently
+      }
+    }
+    return false
+  }
 
   const login = async (username, password) => {
     try {
@@ -128,7 +123,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     loading,
     login,
-    logout
+    logout,
+    restoreAuth
   }
 
   return (

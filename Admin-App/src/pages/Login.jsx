@@ -13,7 +13,7 @@ const Login = () => {
   const { login, isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
-  // Redirect if already authenticated
+  // Only redirect if user is authenticated and not loading
   React.useEffect(() => {
     if (isAuthenticated && !authLoading) {
       navigate('/')
@@ -30,11 +30,6 @@ const Login = () => {
         </div>
       </div>
     )
-  }
-
-  // Don't render login form if already authenticated
-  if (isAuthenticated) {
-    return null
   }
 
   const handleSubmit = async (e) => {

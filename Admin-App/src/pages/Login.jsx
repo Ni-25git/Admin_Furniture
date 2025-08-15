@@ -10,27 +10,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   
-  const { login, isAuthenticated, loading: authLoading } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
-
-  // Only redirect if user is authenticated and not loading
-  React.useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      navigate('/')
-    }
-  }, [isAuthenticated, authLoading, navigate])
-
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()

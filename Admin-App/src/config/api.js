@@ -1,8 +1,9 @@
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://module-funturine.vercel.app/api'
-
 // Check if we're in development or production
 export const IS_DEVELOPMENT = import.meta.env.DEV
+export const API_BASE_URL = IS_DEVELOPMENT
+  ? '/api'
+  : (import.meta.env.VITE_API_BASE_URL || 'https://module-funturine.vercel.app/api')
 
 // API endpoints
 export const API_ENDPOINTS = {

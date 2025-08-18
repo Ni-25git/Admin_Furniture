@@ -1,9 +1,21 @@
 // API Configuration
 // Check if we're in development or production
 export const IS_DEVELOPMENT = import.meta.env.DEV
-export const API_BASE_URL = IS_DEVELOPMENT
-  ? '/api'
-  : (import.meta.env.VITE_API_BASE_URL || 'https://module-funturine.vercel.app/api')
+
+// Base URL uses proxy in development and production backend in prod/preview
+let API_BASE_URL = 'https://module-funturine.vercel.app/api'
+
+if (IS_DEVELOPMENT) {
+  // Point to Vite proxy when running locally
+  API_BASE_URL = '/api'
+}
+
+export { API_BASE_URL }
+
+// Helpful diagnostics in console for environment
+console.log('API_BASE_URL:', API_BASE_URL)
+console.log('IS_DEVELOPMENT:', IS_DEVELOPMENT)
+console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -36,5 +48,7 @@ export const API_ENDPOINTS = {
 
 // Helper function to build full API URL
 export const buildApiUrl = (endpoint) => {
-  return `${API_BASE_URL}${endpoint}`
+  const fullUrl = `${API_BASE_URL}${endpoint}`
+  console.log('Built API URL:', fullUrl)
+  return fullUrl
 } 

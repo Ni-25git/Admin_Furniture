@@ -13,7 +13,7 @@ import {
   Building,
   X
 } from 'lucide-react'
-import { API_ENDPOINTS } from '../config/api'
+import { API_ENDPOINTS, buildApiUrl } from '../config/api'
 
 const Dealers = () => {
   const [dealers, setDealers] = useState([])
@@ -51,11 +51,34 @@ const Dealers = () => {
 
   const handleApprove = async (dealerId) => {
     try {
-      await axios.put(API_ENDPOINTS.APPROVE_DEALER(dealerId))
+      console.log('Approving dealer:', dealerId)
+      const endpoint = API_ENDPOINTS.APPROVE_DEALER(dealerId)
+      const fullUrl = buildApiUrl(endpoint)
+      console.log('Full API URL:', fullUrl)
+      
+      const token = localStorage.getItem('adminToken')
+      console.log('Auth token:', token ? 'Present' : 'Missing')
+      
+      const response = await axios.put(fullUrl, {}, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      console.log('Approval response:', response.data)
       toast.success('Dealer approved successfully')
       fetchDealers()
     } catch (error) {
-      toast.error('Failed to approve dealer')
+      console.error('Approval error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
+      console.error('Error config:', error.config)
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          'Failed to approve dealer'
+      toast.error(errorMessage)
     }
   }
 
@@ -66,11 +89,34 @@ const Dealers = () => {
     }
 
     try {
-      await axios.put(API_ENDPOINTS.REJECT_DEALER(dealerId), { reason })
+      console.log('Rejecting dealer:', dealerId, 'with reason:', reason)
+      const endpoint = API_ENDPOINTS.REJECT_DEALER(dealerId)
+      const fullUrl = buildApiUrl(endpoint)
+      console.log('Full API URL:', fullUrl)
+      
+      const token = localStorage.getItem('adminToken')
+      console.log('Auth token:', token ? 'Present' : 'Missing')
+      
+      const response = await axios.put(fullUrl, { reason }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      console.log('Rejection response:', response.data)
       toast.success('Dealer rejected successfully')
       fetchDealers()
     } catch (error) {
-      toast.error('Failed to reject dealer')
+      console.error('Rejection error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
+      console.error('Error config:', error.config)
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          'Failed to reject dealer'
+      toast.error(errorMessage)
     }
   }
 
@@ -81,6 +127,19 @@ const Dealers = () => {
       setShowModal(true)
     } catch (error) {
       toast.error('Failed to load dealer details')
+    }
+  }
+
+  // Test API connectivity
+  const testApiConnection = async () => {
+    try {
+      console.log('Testing API connection...')
+      const response = await axios.get(buildApiUrl('/admin/dashboard'))
+      console.log('API test successful:', response.data)
+      toast.success('API connection successful')
+    } catch (error) {
+      console.error('API test failed:', error)
+      toast.error('API connection failed')
     }
   }
 
@@ -119,9 +178,17 @@ const Dealers = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dealers</h1>
-        <p className="text-gray-600">Manage dealer registrations and approvals</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dealers</h1>
+          <p className="text-gray-600">Manage dealer registrations and approvals</p>
+        </div>
+        <button
+          onClick={testApiConnection}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+        >
+          Test API Connection
+        </button>
       </div>
 
       {/* Filters */}

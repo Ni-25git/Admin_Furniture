@@ -51,11 +51,14 @@ const Enquiries = () => {
 
   const handleApprove = async (enquiryId) => {
     try {
-      await axios.put(API_ENDPOINTS.APPROVE_ENQUIRY(enquiryId))
+      await axios.put(API_ENDPOINTS.UPDATE_ENQUIRY_STATUS(enquiryId), { 
+        status: 'approved'
+      })
       toast.success('Enquiry approved successfully')
       fetchEnquiries()
     } catch (error) {
-      toast.error('Failed to approve enquiry')
+      const message = error.response?.data?.message || error.response?.data?.error || 'Failed to approve enquiry'
+      toast.error(message)
     }
   }
 
@@ -70,7 +73,8 @@ const Enquiries = () => {
       toast.success('Enquiry rejected successfully')
       fetchEnquiries()
     } catch (error) {
-      toast.error('Failed to reject enquiry')
+      const message = error.response?.data?.message || error.response?.data?.error || 'Failed to reject enquiry'
+      toast.error(message)
     }
   }
 
@@ -83,7 +87,8 @@ const Enquiries = () => {
       toast.success('Enquiry marked as under process')
       fetchEnquiries()
     } catch (error) {
-      toast.error('Failed to update enquiry status')
+      const message = error.response?.data?.message || error.response?.data?.error || 'Failed to update enquiry status'
+      toast.error(message)
     }
   }
 

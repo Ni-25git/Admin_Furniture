@@ -13,7 +13,7 @@ import {
   Building,
   X
 } from 'lucide-react'
-import { API_ENDPOINTS, buildApiUrl } from '../config/api'
+import { API_ENDPOINTS } from '../config/api'
 
 const Dealers = () => {
   const [dealers, setDealers] = useState([])
@@ -24,6 +24,9 @@ const Dealers = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [selectedDealer, setSelectedDealer] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+  const [dealerIdToReject, setDealerIdToReject] = useState(null)
 
   useEffect(() => {
     fetchDealers()
@@ -51,33 +54,13 @@ const Dealers = () => {
 
   const handleApprove = async (dealerId) => {
     try {
-      console.log('Approving dealer:', dealerId)
-      const endpoint = API_ENDPOINTS.APPROVE_DEALER(dealerId)
-      const fullUrl = buildApiUrl(endpoint)
-      console.log('Full API URL:', fullUrl)
-      
-      const token = localStorage.getItem('adminToken')
-      console.log('Auth token:', token ? 'Present' : 'Missing')
-      
-      const response = await axios.put(fullUrl, {}, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      console.log('Approval response:', response.data)
+      const response = await axios.put(API_ENDPOINTS.APPROVE_DEALER(dealerId), {})
       toast.success('Dealer approved successfully')
       fetchDealers()
     } catch (error) {
-      console.error('Approval error:', error)
-      console.error('Error response:', error.response?.data)
-      console.error('Error status:', error.response?.status)
-      console.error('Error config:', error.config)
-      
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
-                          'Failed to approve dealer'
+                          `Failed to approve dealer${error.response?.status ? ` (${error.response.status})` : ''}`
       toast.error(errorMessage)
     }
   }
@@ -89,35 +72,27 @@ const Dealers = () => {
     }
 
     try {
-      console.log('Rejecting dealer:', dealerId, 'with reason:', reason)
-      const endpoint = API_ENDPOINTS.REJECT_DEALER(dealerId)
-      const fullUrl = buildApiUrl(endpoint)
-      console.log('Full API URL:', fullUrl)
-      
-      const token = localStorage.getItem('adminToken')
-      console.log('Auth token:', token ? 'Present' : 'Missing')
-      
-      const response = await axios.put(fullUrl, { reason }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      console.log('Rejection response:', response.data)
+      await axios.put(API_ENDPOINTS.REJECT_DEALER(dealerId), { reason })
       toast.success('Dealer rejected successfully')
       fetchDealers()
     } catch (error) {
-      console.error('Rejection error:', error)
-      console.error('Error response:', error.response?.data)
-      console.error('Error status:', error.response?.status)
-      console.error('Error config:', error.config)
-      
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
-                          'Failed to reject dealer'
+                          `Failed to reject dealer${error.response?.status ? ` (${error.response.status})` : ''}`
       toast.error(errorMessage)
     }
+  }
+
+  const openRejectModal = (dealerId) => {
+    setDealerIdToReject(dealerId)
+    setRejectReason('')
+    setIsRejectModalOpen(true)
+  }
+
+  const closeRejectModal = () => {
+    setIsRejectModalOpen(false)
+    setDealerIdToReject(null)
+    setRejectReason('')
   }
 
   const handleViewDetails = async (dealerId) => {
@@ -134,12 +109,13 @@ const Dealers = () => {
   const testApiConnection = async () => {
     try {
       console.log('Testing API connection...')
-      const response = await axios.get(buildApiUrl('/admin/dashboard'))
+      const response = await axios.get(API_ENDPOINTS.DASHBOARD)
       console.log('API test successful:', response.data)
       toast.success('API connection successful')
     } catch (error) {
       console.error('API test failed:', error)
-      toast.error('API connection failed')
+      const message = error.response?.data?.message || 'API connection failed'
+      toast.error(message)
     }
   }
 
@@ -335,12 +311,7 @@ const Dealers = () => {
                                 <CheckCircle className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => {
-                                  const reason = prompt('Please provide a reason for rejection:')
-                                  if (reason) {
-                                    handleReject(dealer._id, reason)
-                                  }
-                                }}
+                                onClick={() => openRejectModal(dealer._id)}
                                 className="text-red-600 hover:text-red-900"
                                 title="Reject"
                               >
@@ -493,6 +464,48 @@ const Dealers = () => {
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Reject Dealer</h3>
+              <button onClick={closeRejectModal} className="text-gray-400 hover:text-gray-600">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Please provide a reason for rejecting this dealer.</p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={4}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 mb-4"
+              placeholder="Enter rejection reason"
+            />
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={closeRejectModal}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (dealerIdToReject && rejectReason.trim()) {
+                    handleReject(dealerIdToReject, rejectReason.trim())
+                    closeRejectModal()
+                  } else {
+                    toast.error('Please provide a reason for rejection')
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Reject Dealer
               </button>
             </div>
           </div>

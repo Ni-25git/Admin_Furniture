@@ -9,16 +9,24 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Filter
 } from 'lucide-react'
 import { API_ENDPOINTS } from '../config/api'
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null)
+  const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [productsLoading, setProductsLoading] = useState(true)
 
   useEffect(() => {
     fetchDashboardStats()
+    fetchProducts()
   }, [])
 
   const fetchDashboardStats = async () => {
@@ -32,232 +40,249 @@ const Dashboard = () => {
     }
   }
 
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(API_ENDPOINTS.PRODUCTS_ADMIN_ALL, { 
+        params: { limit: 10 } 
+      })
+      setProducts(response.data.products || [])
+    } catch (error) {
+      console.error('Failed to load products')
+    } finally {
+      setProductsLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     )
   }
 
-  if (!stats) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Failed to load dashboard data</p>
-      </div>
-    )
+  const mockStats = {
+    totalProducts: 2345,
+    totalProductsChange: '+15% from last month',
+    activeDealers: 420,
+    activeDealersChange: '+10 new registrations',
+    pendingEnquiries: 37,
+    pendingEnquiriesChange: '2 new today'
   }
 
-  const statCards = [
+  const mockProducts = [
     {
-      name: 'Total Dealers',
-      value: stats.dealers.total,
-      change: stats.dealers.pending,
-      changeType: 'pending',
-      icon: Users,
-      color: 'bg-blue-500'
+      id: 1,
+      name: 'SmartConnect X1',
+      description: 'Latest model smartphone with AI',
+      code: 'SCX1-2024',
+      category: 'Electronics',
+      price: 799.99,
+      stock: 150,
+      status: 'Active',
+      image: null
     },
     {
-      name: 'Total Products',
-      value: stats.products.total,
-      change: stats.products.active,
-      changeType: 'active',
-      icon: Package,
-      color: 'bg-green-500'
+      id: 2,
+      name: 'ErgoComfort Chair',
+      description: 'Adjustable office chair for maximum comfort',
+      code: 'ECC-PRO',
+      category: 'Home Goods',
+      price: 349.00,
+      stock: 75,
+      status: 'Inactive',
+      image: null
     },
     {
-      name: 'Total Enquiries',
-      value: stats.enquiries.total,
-      change: stats.enquiries.pending,
-      changeType: 'pending',
-      icon: MessageSquare,
-      color: 'bg-purple-500'
+      id: 3,
+      name: 'Vintage Leather Wallet',
+      description: 'Handcrafted genuine leather wallet',
+      code: 'VLW-M',
+      category: 'Apparel',
+      price: 89.50,
+      stock: 200,
+      status: 'Active',
+      image: null
     },
     {
-      name: 'Pending Enquiries',
-      value: stats.enquiries.pending,
-      change: stats.enquiries.underProcess,
-      changeType: 'under_process',
-      icon: Clock,
-      color: 'bg-yellow-500'
+      id: 4,
+      name: 'AeroBrew Coffee Maker',
+      description: 'Programmable single-serve coffee maker',
+      code: 'ABCM-100',
+      category: 'Home Goods',
+      price: 129.99,
+      stock: 120,
+      status: 'Active',
+      image: null
+    },
+    {
+      id: 5,
+      name: 'Urban Explorer Backpack',
+      description: 'Weather-resistant backpack with laptop compartment',
+      code: 'UEB-V2',
+      category: 'Apparel',
+      price: 65.00,
+      stock: 90,
+      status: 'Discontinued',
+      image: null
     }
   ]
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'approved':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-500" />
-      case 'pending':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />
-      default:
-        return <Clock className="h-4 w-4 text-gray-500" />
-    }
-  }
-
   const getStatusColor = (status) => {
     switch (status) {
-      case 'approved':
-        return 'text-green-600 bg-green-100'
-      case 'rejected':
-        return 'text-red-600 bg-red-100'
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100'
+      case 'Active':
+        return 'bg-green-100 text-green-800'
+      case 'Inactive':
+        return 'bg-gray-100 text-gray-800'
+      case 'Discontinued':
+        return 'bg-red-100 text-red-800'
       default:
-        return 'text-gray-600 bg-gray-100'
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Dashboard Overview */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Overview of your admin panel</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className={`inline-flex items-center justify-center h-8 w-8 rounded-md ${stat.color} text-white`}>
-                    <stat.icon className="h-5 w-5" />
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      {stat.name}
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stat.value}
-                    </dd>
-                  </dl>
-                </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h1>
+        
+        {/* Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Products</p>
+                <p className="text-3xl font-bold text-gray-900">{stats?.totalProducts?.toLocaleString()}</p>
+                <p className="text-sm text-gray-500 mt-1">{stats?.totalProductsChange}</p>
               </div>
-            </div>
-            <div className="bg-gray-50 px-5 py-3">
-              <div className="text-sm">
-                <span className="text-gray-500">
-                  {stat.changeType === 'pending' ? 'Pending: ' : 'Active: '}
-                </span>
-                <span className="font-medium text-gray-900">
-                  {stat.change}
-                </span>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Recent Activities */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Recent Dealers */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Recent Dealers
-            </h3>
-            <div className="space-y-4">
-              {stats.recentDealers.map((dealer) => (
-                <div key={dealer._id} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-700">
-                          {dealer.companyName.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">
-                        {dealer.companyName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {dealer.contactPersonName}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(dealer.status)}`}>
-                      {getStatusIcon(dealer.status)}
-                      <span className="ml-1">{dealer.status}</span>
-                    </span>
-                  </div>
-                </div>
-              ))}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Dealers</p>
+                <p className="text-3xl font-bold text-gray-900">{stats?.activeDealers}</p>
+                <p className="text-sm text-gray-500 mt-1">{stats?.activeDealersChange}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Recent Enquiries */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Recent Enquiries
-            </h3>
-            <div className="space-y-4">
-              {stats.recentEnquiries.map((enquiry) => (
-                <div key={enquiry._id} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Package className="h-4 w-4 text-blue-600" />
-                      </div>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">
-                        {enquiry.productName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Qty: {enquiry.quantity} • {enquiry.dealer?.companyName}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(enquiry.status)}`}>
-                      {getStatusIcon(enquiry.status)}
-                      <span className="ml-1">{enquiry.status}</span>
-                    </span>
-                  </div>
-                </div>
-              ))}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending Enquiries</p>
+                <p className="text-3xl font-bold text-gray-900">{stats?.pendingEnquiries}</p>
+                <p className="text-sm text-gray-500 mt-1">{stats?.pendingEnquiriesChange}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-6 h-6 text-blue-600" />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-            Quick Statistics
-          </h3>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{stats.dealers.approved}</p>
-              <p className="text-sm text-gray-500">Approved Dealers</p>
+      {/* Product Listing */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Product Listing</h2>
+          <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <Plus className="w-4 h-4" />
+            Add Product
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-64">
+              <input
+                type="text"
+                placeholder="Search products..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{stats.products.active}</p>
-              <p className="text-sm text-gray-500">Active Products</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-purple-600">{stats.enquiries.approved}</p>
-              <p className="text-sm text-gray-500">Approved Enquiries</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-yellow-600">{stats.enquiries.pending}</p>
-              <p className="text-sm text-gray-500">Pending Enquiries</p>
-            </div>
+            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option>Filter by Status</option>
+              <option>Active</option>
+              <option>Inactive</option>
+              <option>Discontinued</option>
+            </select>
+            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option>Filter by Category</option>
+              <option>Electronics</option>
+              <option>Home Goods</option>
+              <option>Apparel</option>
+            </select>
+            <button className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+              Clear Filters
+            </button>
           </div>
+        </div>
+
+        {/* Products Table */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Code</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stock</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {products.map((product) => (
+                <tr key={product.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
+                        <Package className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{product.name}</div>
+                        <div className="text-sm text-gray-500">{product.description}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{product.code}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{product.category}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">${product.price}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{product.stock}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(product.status)}`}>
+                      {product.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   )
 }
 
-export default Dashboard 
+export default Dashboard

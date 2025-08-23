@@ -11,7 +11,11 @@ import {
   Mail,
   Phone,
   Building,
-  X
+  X,
+  Users,
+  UserCheck,
+  UserX,
+  TrendingUp
 } from 'lucide-react'
 import { API_ENDPOINTS } from '../config/api'
 
@@ -27,10 +31,36 @@ const Dealers = () => {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [dealerIdToReject, setDealerIdToReject] = useState(null)
+  const [stats, setStats] = useState({
+    totalDealers: 0,
+    approvedDealers: 0,
+    pendingDealers: 0,
+    rejectedDealers: 0
+  })
 
   useEffect(() => {
     fetchDealers()
+    fetchDealerStats()
   }, [currentPage, statusFilter])
+
+  const fetchDealerStats = async () => {
+    try {
+      // Calculate stats from dealers data or fetch from API
+      const totalDealers = dealers.length
+      const approvedDealers = dealers.filter(d => d.status === 'approved').length
+      const pendingDealers = dealers.filter(d => d.status === 'pending').length
+      const rejectedDealers = dealers.filter(d => d.status === 'rejected').length
+      
+      setStats({
+        totalDealers,
+        approvedDealers,
+        pendingDealers,
+        rejectedDealers
+      })
+    } catch (error) {
+      console.error('Failed to fetch dealer stats:', error)
+    }
+  }
 
   const fetchDealers = async () => {
     try {
@@ -45,6 +75,11 @@ const Dealers = () => {
       const response = await axios.get(API_ENDPOINTS.DEALERS, { params })
       setDealers(response.data.dealers)
       setTotalPages(response.data.totalPages)
+      
+      // Update stats after fetching dealers
+      setTimeout(() => {
+        fetchDealerStats()
+      }, 100)
     } catch (error) {
       toast.error('Failed to load dealers')
     } finally {
@@ -154,108 +189,174 @@ const Dealers = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dealers</h1>
-          <p className="text-gray-600">Manage dealer registrations and approvals</p>
+          <h1 className="text-2xl font-bold text-gray-900">Dealers Overview</h1>
+          <p className="text-gray-500 text-sm">Manage dealer registrations and approvals</p>
         </div>
-        <button
-          onClick={testApiConnection}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-        >
-          Test API Connection
-        </button>
+      </div>
+
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Dealers</dt>
+                  <dd className="text-lg font-semibold text-gray-900">{stats.totalDealers}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <UserCheck className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Approved Dealers</dt>
+                  <dd className="text-lg font-semibold text-gray-900">{stats.approvedDealers}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Clock className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Pending Approval</dt>
+                  <dd className="text-lg font-semibold text-gray-900">{stats.pendingDealers}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <UserX className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Rejected Dealers</dt>
+                  <dd className="text-lg font-semibold text-gray-900">{stats.rejectedDealers}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search dealers..."
-                className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 w-full"
-              />
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search dealers..."
+                  className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
 
-          <div className="flex items-end">
-            <button
-              onClick={() => {
-                setSearchTerm('')
-                setStatusFilter('all')
-              }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Clear Filters
-            </button>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSearchTerm('')
+                  setStatusFilter('all')
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              >
+                Clear Filters
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Dealers Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Dealer
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      DEALER
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contact
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      CONTACT
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      GST
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      GST NUMBER
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      STATUS
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Registered
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      REGISTRATION DATE
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      ACTIONS
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {filteredDealers.map((dealer) => (
-                    <tr key={dealer._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={dealer._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                              <User className="h-5 w-5 text-gray-600" />
+                          <div className="flex-shrink-0 h-12 w-12">
+                            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center border border-gray-200">
+                              <span className="text-sm font-medium text-blue-700">
+                                {dealer.companyName?.charAt(0)?.toUpperCase() || 'D'}
+                              </span>
                             </div>
                           </div>
                           <div className="ml-4">
@@ -268,35 +369,35 @@ const Dealers = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
-                          <div className="flex items-center">
-                            <Mail className="h-4 w-4 mr-1 text-gray-400" />
+                          <div className="flex items-center mb-1">
+                            <Mail className="h-4 w-4 mr-2 text-gray-400" />
                             {dealer.email}
                           </div>
-                          <div className="flex items-center mt-1">
-                            <Phone className="h-4 w-4 mr-1 text-gray-400" />
+                          <div className="flex items-center">
+                            <Phone className="h-4 w-4 mr-2 text-gray-400" />
                             {dealer.mobile}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                         {dealer.gst || 'N/A'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(dealer.status)}`}>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(dealer.status)}`}>
                           {getStatusIcon(dealer.status)}
-                          <span className="ml-1">{dealer.status}</span>
+                          <span className="ml-1 capitalize">{dealer.status}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-500">
                         {new Date(dealer.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end space-x-3">
                           <button
                             onClick={() => handleViewDetails(dealer._id)}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-blue-600 hover:text-blue-800 transition-colors"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
@@ -305,14 +406,14 @@ const Dealers = () => {
                             <>
                               <button
                                 onClick={() => handleApprove(dealer._id)}
-                                className="text-green-600 hover:text-green-900"
+                                className="text-green-600 hover:text-green-800 transition-colors"
                                 title="Approve"
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => openRejectModal(dealer._id)}
-                                className="text-red-600 hover:text-red-900"
+                                className="text-red-600 hover:text-red-800 transition-colors"
                                 title="Reject"
                               >
                                 <XCircle className="h-4 w-4" />
@@ -490,7 +591,7 @@ const Dealers = () => {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={closeRejectModal}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               >
                 Cancel
               </button>
@@ -515,4 +616,4 @@ const Dealers = () => {
   )
 }
 
-export default Dealers 
+export default Dealers

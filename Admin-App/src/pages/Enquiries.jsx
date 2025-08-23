@@ -12,7 +12,9 @@ import {
   Calendar,
   DollarSign,
   MessageSquare,
-  X
+  X,
+  AlertCircle,
+  TrendingUp
 } from 'lucide-react'
 import { API_ENDPOINTS } from '../config/api'
 
@@ -25,10 +27,39 @@ const Enquiries = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [selectedEnquiry, setSelectedEnquiry] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [stats, setStats] = useState({
+    totalEnquiries: 0,
+    approvedEnquiries: 0,
+    pendingEnquiries: 0,
+    rejectedEnquiries: 0,
+    underProcessEnquiries: 0
+  })
 
   useEffect(() => {
     fetchEnquiries()
+    fetchEnquiryStats()
   }, [currentPage, statusFilter])
+
+  const fetchEnquiryStats = async () => {
+    try {
+      // Calculate stats from enquiries data or fetch from API
+      const totalEnquiries = enquiries.length
+      const approvedEnquiries = enquiries.filter(e => e.status === 'approved').length
+      const pendingEnquiries = enquiries.filter(e => e.status === 'pending').length
+      const rejectedEnquiries = enquiries.filter(e => e.status === 'rejected').length
+      const underProcessEnquiries = enquiries.filter(e => e.status === 'under_process').length
+      
+      setStats({
+        totalEnquiries,
+        approvedEnquiries,
+        pendingEnquiries,
+        rejectedEnquiries,
+        underProcessEnquiries
+      })
+    } catch (error) {
+      console.error('Failed to fetch enquiry stats:', error)
+    }
+  }
 
   const fetchEnquiries = async () => {
     try {
@@ -36,12 +67,18 @@ const Enquiries = () => {
       const params = {
         page: currentPage,
         limit: 10,
-        status: statusFilter === 'all' ? undefined : statusFilter
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        search: searchTerm || undefined
       }
       
       const response = await axios.get(API_ENDPOINTS.ENQUIRIES_ADMIN_ALL, { params })
       setEnquiries(response.data.enquiries)
       setTotalPages(response.data.totalPages)
+      
+      // Update stats after fetching enquiries
+      setTimeout(() => {
+        fetchEnquiryStats()
+      }, 100)
     } catch (error) {
       toast.error('Failed to load enquiries')
     } finally {
@@ -141,111 +178,199 @@ const Enquiries = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Enquiries</h1>
-        <p className="text-gray-600">Manage product enquiries from dealers</p>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">All Enquiries</h1>
+          <p className="text-gray-500 text-sm">Manage product enquiries from dealers</p>
+        </div>
+      </div>
+
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <MessageSquare className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Enquiries</dt>
+                  <dd className="text-lg font-semibold text-gray-900">{stats.totalEnquiries}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Approved</dt>
+                  <dd className="text-lg font-semibold text-gray-900">{stats.approvedEnquiries}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Clock className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Pending</dt>
+                  <dd className="text-lg font-semibold text-gray-900">{stats.pendingEnquiries}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Under Process</dt>
+                  <dd className="text-lg font-semibold text-gray-900">{stats.underProcessEnquiries}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <XCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Rejected</dt>
+                  <dd className="text-lg font-semibold text-gray-900">{stats.rejectedEnquiries}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search enquiries..."
-                className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 w-full"
-              />
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search enquiries..."
+                  className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="under_process">Under Process</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="under_process">Under Process</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
 
-          <div className="flex items-end">
-            <button
-              onClick={() => {
-                setSearchTerm('')
-                setStatusFilter('all')
-              }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Clear Filters
-            </button>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSearchTerm('')
+                  setStatusFilter('all')
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              >
+                Clear Filters
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Enquiries Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Product
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      PRODUCT
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Dealer
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      DEALER
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Quantity
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      QUANTITY
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      PRICE
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      STATUS
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      DATE
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      ACTIONS
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {filteredEnquiries.map((enquiry) => (
-                    <tr key={enquiry._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={enquiry._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
+                          <div className="flex-shrink-0 h-12 w-12">
                             {enquiry.product?.images && enquiry.product.images.length > 0 ? (
                               <img
-                                className="h-10 w-10 rounded-lg object-cover"
+                                className="h-12 w-12 rounded-lg object-cover border border-gray-200"
                                 src={enquiry.product.images[0]}
                                 alt={enquiry.productName}
                               />
                             ) : (
-                              <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
-                                <Package className="h-5 w-5 text-gray-400" />
+                              <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
+                                <Package className="h-6 w-6 text-gray-400" />
                               </div>
                             )}
                           </div>
@@ -259,11 +384,13 @@ const Enquiries = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                              <User className="h-4 w-4 text-gray-600" />
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center border border-gray-200">
+                              <span className="text-sm font-medium text-purple-700">
+                                {enquiry.dealer?.companyName?.charAt(0)?.toUpperCase() || 'D'}
+                              </span>
                             </div>
                           </div>
                           <div className="ml-3">
@@ -276,26 +403,26 @@ const Enquiries = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                         {enquiry.quantity}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                         ₹{enquiry.price}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(enquiry.status)}`}>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(enquiry.status)}`}>
                           {getStatusIcon(enquiry.status)}
-                          <span className="ml-1">{enquiry.status}</span>
+                          <span className="ml-1 capitalize">{enquiry.status.replace('_', ' ')}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-500">
                         {new Date(enquiry.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end space-x-3">
                           <button
                             onClick={() => handleViewDetails(enquiry._id)}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-blue-600 hover:text-blue-800 transition-colors"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
@@ -304,14 +431,14 @@ const Enquiries = () => {
                             <>
                               <button
                                 onClick={() => handleApprove(enquiry._id)}
-                                className="text-green-600 hover:text-green-900"
+                                className="text-green-600 hover:text-green-800 transition-colors"
                                 title="Approve"
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handleUnderProcess(enquiry._id)}
-                                className="text-blue-600 hover:text-blue-900"
+                                className="text-blue-600 hover:text-blue-800 transition-colors"
                                 title="Mark Under Process"
                               >
                                 <MessageSquare className="h-4 w-4" />
@@ -323,7 +450,7 @@ const Enquiries = () => {
                                     handleReject(enquiry._id, reason)
                                   }
                                 }}
-                                className="text-red-600 hover:text-red-900"
+                                className="text-red-600 hover:text-red-800 transition-colors"
                                 title="Reject"
                               >
                                 <XCircle className="h-4 w-4" />
@@ -334,7 +461,7 @@ const Enquiries = () => {
                             <>
                               <button
                                 onClick={() => handleApprove(enquiry._id)}
-                                className="text-green-600 hover:text-green-900"
+                                className="text-green-600 hover:text-green-800 transition-colors"
                                 title="Approve"
                               >
                                 <CheckCircle className="h-4 w-4" />
@@ -346,7 +473,7 @@ const Enquiries = () => {
                                     handleReject(enquiry._id, reason)
                                   }
                                 }}
-                                className="text-red-600 hover:text-red-900"
+                                className="text-red-600 hover:text-red-800 transition-colors"
                                 title="Reject"
                               >
                                 <XCircle className="h-4 w-4" />
@@ -565,4 +692,4 @@ const Enquiries = () => {
   )
 }
 
-export default Enquiries 
+export default Enquiries

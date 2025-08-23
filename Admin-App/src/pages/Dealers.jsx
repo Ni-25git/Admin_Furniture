@@ -31,6 +31,10 @@ const Dealers = () => {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [dealerIdToReject, setDealerIdToReject] = useState(null)
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false)
+  const [dealerIdToApprove, setDealerIdToApprove] = useState(null)
+  const [isApproving, setIsApproving] = useState(false)
+  const [isRejecting, setIsRejecting] = useState(false)
   const [stats, setStats] = useState({
     totalDealers: 0,
     approvedDealers: 0,
@@ -73,7 +77,8 @@ const Dealers = () => {
       }
       
       const response = await axios.get(API_ENDPOINTS.DEALERS, { params })
-      setDealers(response.data.dealers)
+      console.log("fhdjdf",response.data)
+      setDealers(response.data.dealers.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)))
       setTotalPages(response.data.totalPages)
       
       // Update stats after fetching dealers
@@ -128,6 +133,28 @@ const Dealers = () => {
     setIsRejectModalOpen(false)
     setDealerIdToReject(null)
     setRejectReason('')
+  }
+
+  const openApproveModal = (dealerId) => {
+    setDealerIdToApprove(dealerId)
+    setIsApproveModalOpen(true)
+  }
+
+  const closeApproveModal = () => {
+    setIsApproveModalOpen(false)
+    setDealerIdToApprove(null)
+  }
+
+  const confirmApprove = async () => {
+    if (dealerIdToApprove) {
+      setIsApproving(true)
+      try {
+        await handleApprove(dealerIdToApprove)
+        closeApproveModal()
+      } finally {
+        setIsApproving(false)
+      }
+    }
   }
 
   const handleViewDetails = async (dealerId) => {
@@ -404,20 +431,22 @@ const Dealers = () => {
                           </button>
                           {dealer.status === 'pending' && (
                             <>
-                              <button
-                                onClick={() => handleApprove(dealer._id)}
-                                className="text-green-600 hover:text-green-800 transition-colors"
-                                title="Approve"
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => openRejectModal(dealer._id)}
-                                className="text-red-600 hover:text-red-800 transition-colors"
-                                title="Reject"
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </button>
+                                                             <button
+                                 onClick={() => openApproveModal(dealer._id)}
+                                 className="text-green-600 hover:text-green-800 transition-colors"
+                                 title="Approve"
+                                 disabled={isApproving}
+                               >
+                                 <CheckCircle className="h-4 w-4" />
+                               </button>
+                                                             <button
+                                 onClick={() => openRejectModal(dealer._id)}
+                                 className="text-red-600 hover:text-red-800 transition-colors"
+                                 title="Reject"
+                                 disabled={isRejecting}
+                               >
+                                 <XCircle className="h-4 w-4" />
+                               </button>
                             </>
                           )}
                         </div>
@@ -571,6 +600,52 @@ const Dealers = () => {
         </div>
       )}
 
+      {/* Approve Confirmation Modal */}
+      {isApproveModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Approve Dealer</h3>
+              <button onClick={closeApproveModal} className="text-gray-400 hover:text-gray-600">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="mb-6">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Confirm Approval</h3>
+              <p className="text-sm text-gray-600 text-center">
+                Are you sure you want to approve this dealer? This action will grant them access to the platform.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={closeApproveModal}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              >
+                Cancel
+              </button>
+                             <button
+                 onClick={confirmApprove}
+                 disabled={isApproving}
+                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 {isApproving ? (
+                   <div className="flex items-center justify-center">
+                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                     Approving...
+                   </div>
+                 ) : (
+                   'Approve Dealer'
+                 )}
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
       {isRejectModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
@@ -596,18 +671,31 @@ const Dealers = () => {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  if (dealerIdToReject && rejectReason.trim()) {
-                    handleReject(dealerIdToReject, rejectReason.trim())
-                    closeRejectModal()
-                  } else {
-                    toast.error('Please provide a reason for rejection')
-                  }
-                }}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
-                Reject Dealer
-              </button>
+                                 onClick={async () => {
+                   if (dealerIdToReject && rejectReason.trim()) {
+                     setIsRejecting(true)
+                     try {
+                       await handleReject(dealerIdToReject, rejectReason.trim())
+                       closeRejectModal()
+                     } finally {
+                       setIsRejecting(false)
+                     }
+                   } else {
+                     toast.error('Please provide a reason for rejection')
+                   }
+                 }}
+                 disabled={isRejecting}
+                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 {isRejecting ? (
+                   <div className="flex items-center justify-center">
+                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                     Rejecting...
+                   </div>
+                 ) : (
+                   'Reject Dealer'
+                 )}
+               </button>
             </div>
           </div>
         </div>

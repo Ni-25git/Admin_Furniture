@@ -49,8 +49,11 @@ const Dealers = () => {
 
   const fetchDealerStats = async () => {
     try {
+      const statsResponse = await axios.get(API_ENDPOINTS.DASHBOARD)
+      const delears=statsResponse?.data?.dashboardStats
       // Calculate stats from dealers data or fetch from API
-      const totalDealers = dealers.length
+      const totalDealers = delears.dealers?.total
+      console.log("tota.aa",delears)
       const approvedDealers = dealers.filter(d => d.status === 'approved').length
       const pendingDealers = dealers.filter(d => d.status === 'pending').length
       const rejectedDealers = dealers.filter(d => d.status === 'rejected').length
@@ -157,29 +160,17 @@ const Dealers = () => {
     }
   }
 
-  const handleViewDetails = async (dealerId) => {
+  const handleViewDetails = async (dealer) => {
     try {
-      const response = await axios.get(API_ENDPOINTS.DEALER_DETAILS(dealerId))
-      setSelectedDealer(response.data)
+      // const response = await axios.get(API_ENDPOINTS.DEALER_DETAILS(dealerId))
+      // setSelectedDealer(response.data)
+      setSelectedDealer(dealer)
       setShowModal(true)
     } catch (error) {
       toast.error('Failed to load dealer details')
     }
   }
 
-  // Test API connectivity
-  const testApiConnection = async () => {
-    try {
-      console.log('Testing API connection...')
-      const response = await axios.get(API_ENDPOINTS.DASHBOARD)
-      console.log('API test successful:', response.data)
-      toast.success('API connection successful')
-    } catch (error) {
-      console.error('API test failed:', error)
-      const message = error.response?.data?.message || 'API connection failed'
-      toast.error(message)
-    }
-  }
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -423,7 +414,7 @@ const Dealers = () => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end space-x-3">
                           <button
-                            onClick={() => handleViewDetails(dealer._id)}
+                            onClick={() => handleViewDetails(dealer)}
                             className="text-blue-600 hover:text-blue-800 transition-colors"
                             title="View Details"
                           >
@@ -520,81 +511,140 @@ const Dealers = () => {
 
       {/* Dealer Details Modal */}
       {showModal && selectedDealer && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-900">Dealer Details</h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-6 w-6" />
-              </button>
+                 <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+           <div className="w-full max-w-2xl max-h-[90vh] shadow-2xl rounded-2xl bg-gradient-to-br from-white to-gray-50 overflow-hidden">
+            {/* Header with gradient background */}
+            <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-8 py-6 text-white">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-4">
+                  <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center border-2 border-white/30">
+                    <Building className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold">{selectedDealer.companyName}</h3>
+                    <p className="text-blue-100 text-sm">Dealer Profile</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="h-10 w-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                >
+                  <X className="h-5 w-5 text-white" />
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Company Name</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedDealer.companyName}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contact Person</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedDealer.contactPersonName}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedDealer.email}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Mobile</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedDealer.mobile}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">GST Number</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedDealer.gst || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedDealer.status)}`}>
-                    {getStatusIcon(selectedDealer.status)}
-                    <span className="ml-1">{selectedDealer.status}</span>
-                  </span>
-                </div>
+                         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+               {/* Status Badge */}
+               <div className="mb-6 flex justify-center">
+                <span className={`inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold ${getStatusColor(selectedDealer.status)} shadow-lg`}>
+                  {getStatusIcon(selectedDealer.status)}
+                  <span className="ml-2 capitalize text-lg">{selectedDealer.status}</span>
+                </span>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Address</label>
-                <p className="mt-1 text-sm text-gray-900">{selectedDealer.address}</p>
-              </div>
+                             {/* Main Information Grid */}
+               <div className="grid grid-cols-1 gap-6 mb-6">
+                {/* Company Information */}
+                <div className="space-y-6">
+                  <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <Building className="h-5 w-5 mr-2 text-blue-600" />
+                      Company Information
+                    </h4>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Company Name</label>
+                        <p className="text-lg font-semibold text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedDealer.companyName}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Contact Person</label>
+                        <p className="text-lg font-semibold text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedDealer.contactPersonName}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">GST Number</label>
+                        <p className="text-lg font-semibold text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedDealer.gst || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-              {selectedDealer.enquiries && selectedDealer.enquiries.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Recent Enquiries</label>
-                  <div className="space-y-2">
-                    {selectedDealer.enquiries.slice(0, 5).map((enquiry) => (
-                      <div key={enquiry._id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{enquiry.productName}</p>
-                          <p className="text-xs text-gray-500">Qty: {enquiry.quantity}</p>
+                {/* Contact Information */}
+                <div className="space-y-6">
+                  <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <User className="h-5 w-5 mr-2 text-green-600" />
+                      Contact Details
+                    </h4>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Email Address</label>
+                        <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg">
+                          <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                          <p className="text-lg font-semibold text-gray-900">{selectedDealer.email}</p>
                         </div>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(enquiry.status)}`}>
-                          {enquiry.status}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Mobile Number</label>
+                        <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg">
+                          <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                          <p className="text-lg font-semibold text-gray-900">{selectedDealer.mobile}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Section */}
+              <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 mb-8">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <div className="h-5 w-5 mr-2 bg-purple-100 rounded-full flex items-center justify-center">
+                    <div className="h-2 w-2 bg-purple-600 rounded-full"></div>
+                  </div>
+                  Address
+                </h4>
+                <p className="text-lg text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{selectedDealer.address}</p>
+              </div>
+
+              {/* Recent Enquiries */}
+              {selectedDealer.enquiries && selectedDealer.enquiries.length > 0 && (
+                <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <TrendingUp className="h-5 w-5 mr-2 text-orange-600" />
+                    Recent Enquiries ({selectedDealer.enquiries.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {selectedDealer.enquiries.slice(0, 5).map((enquiry, index) => (
+                      <div key={enquiry._id} className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl border border-orange-100 hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center space-x-4">
+                          <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold text-sm">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{enquiry.productName}</p>
+                            <p className="text-xs text-gray-600">Quantity: {enquiry.quantity}</p>
+                          </div>
+                        </div>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(enquiry.status)} shadow-sm`}>
+                          {getStatusIcon(enquiry.status)}
+                          <span className="ml-1 capitalize">{enquiry.status}</span>
                         </span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-            </div>
 
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Close
-              </button>
+              {/* Footer */}
+              <div className="mt-8 flex justify-end">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-800 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                >
+                  Close Details
+                </button>
+              </div>
             </div>
           </div>
         </div>

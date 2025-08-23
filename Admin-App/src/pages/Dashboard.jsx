@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { 
@@ -16,9 +16,24 @@ const Dashboard = () => {
   const [recentDealers, setRecentDealers] = useState([])
   const [recentEnquiries, setRecentEnquiries] = useState([])
   const [loading, setLoading] = useState(true)
+  const isFetchingRef = useRef(false)
 
   useEffect(() => {
-    fetchDashboardData()
+    // Add a flag to prevent duplicate API calls
+    let isMounted = true
+    
+    const fetchData = async () => {
+      if (isMounted) {
+        await fetchDashboardData()
+      }
+    }
+    
+    fetchData()
+    
+    // Cleanup function to prevent setting state on unmounted component
+    return () => {
+      isMounted = false
+    }
   }, [])
 
     const fetchDashboardData = async () => {

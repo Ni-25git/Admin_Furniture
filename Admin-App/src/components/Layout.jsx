@@ -39,8 +39,7 @@ const Layout = () => {
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white shadow-xl">
           <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200">
             <div className="flex items-center">
-              <div className="text-2xl font-bold text-gray-900">✱</div>
-              <span className="ml-2 text-lg font-semibold text-gray-900 italic">logo</span>
+              <span className="text-lg font-semibold text-gray-900">Hello Moulded Furniture</span>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -86,8 +85,7 @@ const Layout = () => {
         <div className="flex flex-col flex-grow bg-white shadow-sm border-r border-gray-200">
           <div className="flex h-16 items-center px-6 border-b border-gray-200">
             <div className="flex items-center">
-              <div className="text-2xl font-bold text-gray-900">✱</div>
-              <span className="ml-2 text-lg font-semibold text-gray-900 italic">logo</span>
+              <span className="text-lg font-semibold text-gray-900">Hello Moulded Furniture</span>
             </div>
           </div>
           <nav className="flex-1 px-4 py-6 space-y-2">

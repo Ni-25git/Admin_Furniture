@@ -1,55 +1,73 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { 
   Users, 
   Package, 
   MessageSquare, 
-  TrendingUp, 
   Clock,
   CheckCircle,
-  XCircle,
-  AlertCircle,
-  Plus,
-  Edit,
-  Trash2,
-  Search,
-  Filter
+  User
 } from 'lucide-react'
 import { API_ENDPOINTS } from '../config/api'
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null)
-  const [products, setProducts] = useState([])
+  const [recentDealers, setRecentDealers] = useState([])
+  const [recentEnquiries, setRecentEnquiries] = useState([])
   const [loading, setLoading] = useState(true)
-  const [productsLoading, setProductsLoading] = useState(true)
+  const isFetchingRef = useRef(false)
 
   useEffect(() => {
-    fetchDashboardStats()
-    fetchProducts()
+    // Add a flag to prevent duplicate API calls
+    let isMounted = true
+    
+    const fetchData = async () => {
+      if (isMounted) {
+        await fetchDashboardData()
+      }
+    }
+    
+    fetchData()
+    
+    // Cleanup function to prevent setting state on unmounted component
+    return () => {
+      isMounted = false
+    }
   }, [])
 
-  const fetchDashboardStats = async () => {
+    const fetchDashboardData = async () => {
     try {
-      const response = await axios.get(API_ENDPOINTS.DASHBOARD)
-      setStats(response.data.dashboardStats)
+      // Fetch dashboard stats
+      const statsResponse = await axios.get(API_ENDPOINTS.DASHBOARD)
+      const data = statsResponse?.data?.dashboardStats
+      
+      setStats({
+        totalDealers: data?.dealers?.total || 0,
+        pendingDealers: data?.dealers?.pending || 0,
+        totalProducts: data?.products?.total || 0,
+        totalEnquiries: data?.enquiries?.total || 0,
+        pendingEnquiries: data?.enquiries?.pending || 0,
+        approvedEnquiries: data?.enquiries?.approved || 0,
+        closedEnquiries: data?.enquiries?.closed || 0
+      })
+
+      setRecentDealers(data?.recentDealers?.sort((a,b) => new Date(b?.createdAt) - new Date(a?.createdAt)).slice(0,5) || [])
+      setRecentEnquiries(data?.recentEnquiries?.sort((a,b) => new Date(b?.createdAt) - new Date(a?.createdAt)).slice(0,5) || [])
+   
     } catch (error) {
-      toast.error('Failed to load dashboard data')
+      console.error('Failed to load dashboard data')
+      // Set default values if API fails
+      setStats({
+        totalDealers: 0,
+        totalProducts: 0,
+        totalEnquiries: 0,
+        pendingEnquiries: 0
+      })
+      setRecentDealers([])
+      setRecentEnquiries([])
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchProducts = async () => {
-    try {
-      const response = await axios.get(API_ENDPOINTS.PRODUCTS_ADMIN_ALL, { 
-        params: { limit: 10 } 
-      })
-      setProducts(response.data.products || [])
-    } catch (error) {
-      console.error('Failed to load products')
-    } finally {
-      setProductsLoading(false)
     }
   }
 
@@ -61,225 +79,141 @@ const Dashboard = () => {
     )
   }
 
-  const mockStats = {
-    totalProducts: 2345,
-    totalProductsChange: '+15% from last month',
-    activeDealers: 420,
-    activeDealersChange: '+10 new registrations',
-    pendingEnquiries: 37,
-    pendingEnquiriesChange: '2 new today'
-  }
-
-  const mockProducts = [
-    {
-      id: 1,
-      name: 'SmartConnect X1',
-      description: 'Latest model smartphone with AI',
-      code: 'SCX1-2024',
-      category: 'Electronics',
-      price: 799.99,
-      stock: 150,
-      status: 'Active',
-      image: null
-    },
-    {
-      id: 2,
-      name: 'ErgoComfort Chair',
-      description: 'Adjustable office chair for maximum comfort',
-      code: 'ECC-PRO',
-      category: 'Home Goods',
-      price: 349.00,
-      stock: 75,
-      status: 'Inactive',
-      image: null
-    },
-    {
-      id: 3,
-      name: 'Vintage Leather Wallet',
-      description: 'Handcrafted genuine leather wallet',
-      code: 'VLW-M',
-      category: 'Apparel',
-      price: 89.50,
-      stock: 200,
-      status: 'Active',
-      image: null
-    },
-    {
-      id: 4,
-      name: 'AeroBrew Coffee Maker',
-      description: 'Programmable single-serve coffee maker',
-      code: 'ABCM-100',
-      category: 'Home Goods',
-      price: 129.99,
-      stock: 120,
-      status: 'Active',
-      image: null
-    },
-    {
-      id: 5,
-      name: 'Urban Explorer Backpack',
-      description: 'Weather-resistant backpack with laptop compartment',
-      code: 'UEB-V2',
-      category: 'Apparel',
-      price: 65.00,
-      stock: 90,
-      status: 'Discontinued',
-      image: null
-    }
-  ]
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800'
-      case 'Inactive':
-        return 'bg-gray-100 text-gray-800'
-      case 'Discontinued':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
   return (
     <div className="space-y-8">
-      {/* Dashboard Overview */}
+      {/* Dashboard Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h1>
-        
-        {/* Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Products</p>
-                <p className="text-3xl font-bold text-gray-900">{stats?.totalProducts?.toLocaleString()}</p>
-                <p className="text-sm text-gray-500 mt-1">{stats?.totalProductsChange}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6 text-blue-600" />
-              </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
+        <p className="text-gray-600">Overview of your admin panel</p>
+      </div>
+      
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                 <div className="bg-white rounded-lg border border-gray-200 p-6">
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="text-sm font-medium text-gray-600">Total Dealers</p>
+               <p className="text-3xl font-bold text-gray-900">{stats?.totalDealers || 0}</p>
+               <p className="text-sm text-gray-500 mt-1">Pending: {stats?.pendingDealers || 0}</p>
+             </div>
+             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+               <Users className="w-6 h-6 text-blue-600" />
+             </div>
+           </div>
+         </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Products</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.totalProducts || 17}</p>
+              <p className="text-sm text-gray-500 mt-1">Active: 17</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Package className="w-6 h-6 text-green-600" />
             </div>
           </div>
+        </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Dealers</p>
-                <p className="text-3xl font-bold text-gray-900">{stats?.activeDealers}</p>
-                <p className="text-sm text-gray-500 mt-1">{stats?.activeDealersChange}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Enquiries</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.totalEnquiries}</p>
+              <p className="text-sm text-gray-500 mt-1">Pending: 7</p>
+            </div>
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <MessageSquare className="w-6 h-6 text-purple-600" />
             </div>
           </div>
+        </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending Enquiries</p>
-                <p className="text-3xl font-bold text-gray-900">{stats?.pendingEnquiries}</p>
-                <p className="text-sm text-gray-500 mt-1">{stats?.pendingEnquiriesChange}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <MessageSquare className="w-6 h-6 text-blue-600" />
-              </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Approved Enquiries</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.approvedEnquiries}</p>
+              <p className="text-sm text-gray-500 mt-1">Closed: {stats?.closedEnquiries}</p>
+            </div>
+            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+              <Clock className="w-6 h-6 text-orange-600" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Product Listing */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Product Listing</h2>
-          <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-            <Plus className="w-4 h-4" />
-            Add Product
-          </button>
-        </div>
+      {/* Recent Activity Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {/* Recent Dealers */}
+         <div className="bg-white rounded-lg border border-gray-200 p-6">
+           <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Dealers</h3>
+           <div className="space-y-4">
+             {recentDealers && recentDealers.length > 0 ? (
+               recentDealers.map((dealer) => (
+                 <div key={dealer._id} className="flex items-center justify-between">
+                   <div className="flex items-center space-x-3">
+                     <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                       <span className="text-sm font-medium text-gray-600">
+                         {dealer.companyName ? dealer.companyName.charAt(0).toUpperCase() : '?'}
+                       </span>
+                     </div>
+                     <div>
+                       <p className="text-sm font-medium text-gray-900">{dealer.companyName || 'Unnamed Dealer'}</p>
+                       <p className="text-xs text-gray-500">{dealer.contactPersonName || 'No Contact'}</p>
+                     </div>
+                   </div>
+                   <div className="flex items-center space-x-1">
+                     {dealer.status === 'approved' ? (
+                       <span className="text-green-600 text-xs flex items-center">
+                         <CheckCircle className="w-3 h-3 mr-1" />
+                         approved
+                       </span>
+                     ) : (
+                       <span className="text-orange-600 text-xs flex items-center">
+                         <Clock className="w-3 h-3 mr-1" />
+                         pending
+                       </span>
+                     )}
+                   </div>
+                 </div>
+               ))
+             ) : (
+               <div className="text-center py-8">
+                 <p className="text-gray-500">No dealers available</p>
+               </div>
+             )}
+           </div>
+         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-64">
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <option>Filter by Status</option>
-              <option>Active</option>
-              <option>Inactive</option>
-              <option>Discontinued</option>
-            </select>
-            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <option>Filter by Category</option>
-              <option>Electronics</option>
-              <option>Home Goods</option>
-              <option>Apparel</option>
-            </select>
-            <button className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
-              Clear Filters
-            </button>
-          </div>
-        </div>
-
-        {/* Products Table */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Code</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stock</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {products.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
-                        <Package className="w-5 h-5 text-gray-400" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{product.name}</div>
-                        <div className="text-sm text-gray-500">{product.description}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{product.code}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{product.category}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">${product.price}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{product.stock}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(product.status)}`}>
-                      {product.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="text-red-600 hover:text-red-800">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                 {/* Recent Enquiries */}
+         <div className="bg-white rounded-lg border border-gray-200 p-6">
+           <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Enquiries</h3>
+           <div className="space-y-4">
+             {recentEnquiries && recentEnquiries.length > 0 ? (
+               recentEnquiries.map((enquiry) => (
+                 <div key={enquiry._id || enquiry.id} className="flex items-center justify-between">
+                   <div className="flex items-center space-x-3">
+                     <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                       <Package className="w-4 h-4 text-blue-600" />
+                     </div>
+                     <div>
+                       <p className="text-sm font-medium text-gray-900">{enquiry.productName || 'Unnamed Product'}</p>
+                       <p className="text-xs text-gray-500">Qty: {enquiry.quantity || 0} • {enquiry.dealer || 'Unknown'}</p>
+                     </div>
+                   </div>
+                   <span className="text-orange-600 text-xs flex items-center">
+                     <Clock className="w-3 h-3 mr-1" />
+                     pending
+                   </span>
+                 </div>
+               ))
+             ) : (
+               <div className="text-center py-8">
+                 <p className="text-gray-500">No enquiries available</p>
+               </div>
+             )}
+           </div>
+         </div>
       </div>
     </div>
   )

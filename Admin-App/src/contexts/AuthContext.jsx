@@ -36,7 +36,11 @@ export const AuthProvider = ({ children }) => {
   axios.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.response?.status === 401) {
+      console.log('Axios interceptor error:', error.response?.status, error.response?.data)
+      
+      // Don't logout for token validation requests to avoid infinite loops
+      if (error.response?.status === 401 && !error.config?.url?.includes('validate-token')) {
+        console.log('401 error detected, logging out user')
         logout()
         toast.error('Session expired. Please login again.')
       }
@@ -52,23 +56,73 @@ export const AuthProvider = ({ children }) => {
           Authorization: `Bearer ${token}`
         }
       })
-      return response.data.admin
+      
+      console.log('Token validation response:', response.data)
+      
+      // Check if the response has the expected structure
+      if (response.data.success && response.data.data && response.data.data.admin) {
+        return response.data.data.admin
+      } else if (response.data.admin) {
+        // Fallback for different response structure
+        return response.data.admin
+      }
+      
+      return null
     } catch (error) {
+      console.log('Token validation error:', error.response?.data || error.message)
       // If validation endpoint doesn't exist (404) or token is invalid (401), return null
       if (error.response?.status === 404) {
         // Endpoint doesn't exist, fall back to localStorage data
         const adminData = localStorage.getItem('adminData')
         return adminData ? JSON.parse(adminData) : null
       }
+      // For any other error (including 401), return null
       return null
     }
   }
 
   useEffect(() => {
-    // Just set loading to false on initial load
-    // Don't automatically restore auth state
-    setLoading(false)
+    // Check for existing token on page reload
+    const checkExistingAuth = async () => {
+      const token = localStorage.getItem('adminToken')
+      const adminData = localStorage.getItem('adminData')
+      
+      console.log('Checking existing auth...', { hasToken: !!token, hasAdminData: !!adminData })
+      
+      if (token && adminData) {
+        try {
+          console.log('Validating token...')
+          const validAdmin = await validateToken(token)
+          console.log('Validation result:', validAdmin)
+          
+          if (validAdmin) {
+            console.log('Token is valid, restoring auth state')
+            setAdmin(validAdmin)
+            setIsAuthenticated(true)
+            localStorage.setItem('adminData', JSON.stringify(validAdmin))
+            console.log('Auth state restored successfully')
+          } else {
+            console.log('Token is invalid, clearing storage')
+            logout()
+          }
+        } catch (error) {
+          console.log('Error validating token:', error)
+          // Handle error silently and clear storage
+          logout()
+        }
+      } else {
+        console.log('No token or admin data found')
+      }
+      setLoading(false)
+    }
+
+    checkExistingAuth()
   }, [])
+
+  // Debug: Monitor authentication state changes
+  useEffect(() => {
+    console.log('Auth state changed:', { isAuthenticated, admin, loading })
+  }, [isAuthenticated, admin, loading])
 
   // Function to manually restore auth state (for when user is on protected route)
   const restoreAuth = async () => {

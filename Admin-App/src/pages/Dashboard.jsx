@@ -198,7 +198,7 @@ const Dashboard = () => {
                      </div>
                      <div>
                        <p className="text-sm font-medium text-gray-900">{enquiry.productName || 'Unnamed Product'}</p>
-                       <p className="text-xs text-gray-500">Qty: {enquiry.quantity || 0} • {enquiry.dealer || 'Unknown'}</p>
+                       <p className="text-xs text-gray-500">Qty: {enquiry.quantity || 0} • {enquiry.dealer?.companyName || 'Unknown'}</p>
                      </div>
                    </div>
                    <span className="text-orange-600 text-xs flex items-center">

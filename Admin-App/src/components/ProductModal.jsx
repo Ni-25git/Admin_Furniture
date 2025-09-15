@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { X, Upload, Trash2, Plus } from 'lucide-react'
 import { API_ENDPOINTS, buildApiUrl } from '../config/api'
 
 const ProductModal = ({ product, onClose, onSaved, categories }) => {
+  const fileInputRef = useRef(null)
   const [formData, setFormData] = useState({
     productCode: '',
     productName: '',
@@ -381,7 +382,10 @@ const ProductModal = ({ product, onClose, onSaved, categories }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Product Images
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+            <div
+              className="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            >
               <div className="text-center">
                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
                 <div className="mt-2">
@@ -395,6 +399,7 @@ const ProductModal = ({ product, onClose, onSaved, categories }) => {
                       accept="image/*"
                       onChange={handleImageUpload}
                       className="sr-only"
+                      ref={fileInputRef}
                     />
                   </label>
                 </div>
@@ -404,7 +409,11 @@ const ProductModal = ({ product, onClose, onSaved, categories }) => {
             {formData.images.length > 0 && (
               <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {formData.images.map((image, index) => (
-                  <div key={index} className="relative">
+                  <div
+                    key={index}
+                    className="relative cursor-pointer group"
+                    onClick={() => window.open(image, '_blank', 'noopener,noreferrer')}
+                  >
                     <img
                       src={image}
                       alt={`Product ${index + 1}`}
@@ -412,7 +421,7 @@ const ProductModal = ({ product, onClose, onSaved, categories }) => {
                     />
                     <button
                       type="button"
-                      onClick={() => removeImage(index)}
+                      onClick={(e) => { e.stopPropagation(); removeImage(index) }}
                       className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                     >
                       <Trash2 className="h-3 w-3" />

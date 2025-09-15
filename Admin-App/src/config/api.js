@@ -20,7 +20,7 @@ export const API_ENDPOINTS = {
   PRODUCTS: '/products',
   PRODUCTS_ADMIN_ALL: '/products/admin/all',
   PRODUCTS_CATEGORIES: '/products/categories/list',
-  UPLOAD_IMAGES: '/upload/images',
+  UPLOAD_IMAGES: '/products/upload-images',
   
   // Dealers
   DEALERS: '/admin/dealers',

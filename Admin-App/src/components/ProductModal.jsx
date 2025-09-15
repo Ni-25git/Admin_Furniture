@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { X, Upload, Trash2, Plus } from 'lucide-react'
-import { API_ENDPOINTS } from '../config/api'
+import { API_ENDPOINTS, buildApiUrl } from '../config/api'
 
 const ProductModal = ({ product, onClose, onSaved, categories }) => {
   const [formData, setFormData] = useState({
@@ -49,31 +49,94 @@ const ProductModal = ({ product, onClose, onSaved, categories }) => {
   }
 
   const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files)
-    if (files.length === 0) return
+    const fileList = e.target.files
+    if (!fileList || fileList.length === 0) return
 
     setLoading(true)
     try {
-      const formData = new FormData()
-      files.forEach(file => {
-        formData.append('images', file)
-      })
+      const tryUpload = async (fieldName) => {
+        const fd = new FormData()
+        Array.from(fileList).forEach((file) => {
+          fd.append(fieldName, file)
+        })
+        console.log(`Uploading ${fileList.length} file(s) as field:`, fieldName)
+        return axios.post(buildApiUrl(API_ENDPOINTS.UPLOAD_IMAGES), fd, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+      }
 
-      const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGES, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      console.log('Upload URL:', buildApiUrl(API_ENDPOINTS.UPLOAD_IMAGES))
+
+      let response
+      try {
+        // First attempt: common multi-file field
+        response = await tryUpload('images')
+      } catch (err) {
+        const msg = err?.response?.data?.message || err?.message || ''
+        console.warn('Upload failed with field "images". Message:', msg)
+        if (/Unexpected field/i.test(msg)) {
+          // Retry with single-file field name
+          response = await tryUpload('image')
+        } else {
+          throw err
         }
-      })
+      }
 
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...response.data.urls]
-      }))
+      console.log('Upload response data:', response?.data)
+      const data = response?.data
+      const extractUrls = (payload) => {
+        if (!payload) return []
+        if (Array.isArray(payload)) {
+          return payload
+            .map(item => (typeof item === 'string' ? item : (item?.url || item?.Location || item?.path)))
+            .filter(Boolean)
+        }
+        const candidates = [
+          payload.urls,
+          payload.images,
+          payload.files,
+          payload.result,
+          // Common API envelope: { success: true, data: [...] }
+          payload.data,
+          payload.data?.urls,
+          payload.data?.images,
+          payload.data?.files
+        ]
+        for (const maybeArr of candidates) {
+          if (Array.isArray(maybeArr)) {
+            const normalized = maybeArr
+              .map(item => (typeof item === 'string' ? item : (item?.url || item?.Location || item?.path)))
+              .filter(Boolean)
+            if (normalized.length) return normalized
+          }
+        }
+        if (typeof payload.url === 'string') return [payload.url]
+        if (typeof payload.Location === 'string') return [payload.Location]
+        if (typeof payload.path === 'string') return [payload.path]
+        return []
+      }
+      const newUrls = extractUrls(data)
+      console.log('Extracted image URLs:', newUrls)
+
+      if (newUrls.length > 0) {
+        setFormData(prev => {
+          const updated = {
+            ...prev,
+            images: [...prev.images, ...newUrls]
+          }
+          console.log('Updated images array:', updated.images)
+          return updated
+        })
+      }
       toast.success('Images uploaded successfully')
     } catch (error) {
-      toast.error('Failed to upload images')
+      const message = error.response?.data?.message || 'Failed to upload images'
+      toast.error(message)
     } finally {
       setLoading(false)
+      e.target.value = null
     }
   }
 
@@ -132,10 +195,12 @@ const ProductModal = ({ product, onClose, onSaved, categories }) => {
 
     try {
       if (isEditing) {
-        await axios.put(`${API_ENDPOINTS.PRODUCTS}/${product._id}`, formData)
+        console.log('Submitting update payload:', formData)
+        await axios.put(buildApiUrl(`${API_ENDPOINTS.PRODUCTS}/${product._id}`), formData)
         toast.success('Product updated successfully')
       } else {
-        await axios.post(API_ENDPOINTS.PRODUCTS, formData)
+        console.log('Submitting create payload:', formData)
+        await axios.post(buildApiUrl(API_ENDPOINTS.PRODUCTS), formData)
         toast.success('Product created successfully')
       }
       onSaved()

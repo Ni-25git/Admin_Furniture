@@ -26,7 +26,13 @@ const Products = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [showModal, setShowModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
-  const [categories, setCategories] = useState([])
+  const [categories, setCategories] = useState([
+    'Chairs',
+    'Tables',
+    'Kids Tange',
+    'Stools',
+    'Set of Chair & Table'
+  ])
 
   useEffect(() => {
     fetchProducts()
@@ -44,6 +50,7 @@ const Products = () => {
       }
       
       const response = await axios.get(API_ENDPOINTS.PRODUCTS_ADMIN_ALL, { params })
+      console.log('Products fetched:', response.data)
       setProducts(response.data.products)
       setTotalPages(response.data.totalPages)
     } catch (error) {
@@ -56,9 +63,13 @@ const Products = () => {
   const fetchCategories = async () => {
     try {
       const response = await axios.get(API_ENDPOINTS.PRODUCTS_CATEGORIES)
-      setCategories(response.data.categories)
+      console.log('Categories API response:', response.data)
+      if (response.data && response.data.categories) {
+        setCategories(response.data.categories)
+      }
     } catch (error) {
-      console.error('Failed to load categories')
+      console.error('Failed to load categories:', error)
+      // Keep the default hardcoded categories if API fails
     }
   }
 
@@ -263,6 +274,9 @@ const Products = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {product.category}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {product.subCategory}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         ₹{product.price}
